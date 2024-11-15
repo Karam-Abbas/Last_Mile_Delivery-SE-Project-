@@ -13,7 +13,6 @@ router.post('/signup', async (req, res) => {
         const newCustomer = new Customer(data)
         const response = await newCustomer.save()
         const payload = {
-            id: response.id,
             username: response.username
         }
         const token = generateToken(payload)
@@ -33,10 +32,10 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid username or password' })
 
         }
-
+        console.log("where is error")
         //generate Token
         const payload = {
-            id: customer.id,
+
             username: customer.username
         }
 
@@ -52,17 +51,20 @@ router.post('/login', async (req, res) => {
 })
 router.get('/profile', jwtAuthMiddleware, async (req, res) => {
     try {
-        //req.user should be according to jwtAuthMiddleware in which i declared it as req.userPayload
-        const customerData = req.customerPayload
-        const customerId = customerData.id
-        const customer = await Customer.findById(customerId)
+        const customerData = req.customerPayload;
+        const customerUsername = customerData.username;
+        const customer = await Customer.findOne({ username: customerUsername });
 
-        res.status(200).json({customer})
-    }catch(error){
-        console.error(error)
-        res.status(500).json({error: 'Internal Server Error'})
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        res.status(200).json({ customer });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-})
+});
 router.get('/orders',jwtAuthMiddleware,async(req,res)=>{
     try {
         const customerId = req.customerPayload.id
@@ -79,4 +81,4 @@ router.get('/orders',jwtAuthMiddleware,async(req,res)=>{
     }
 })
 
-module.exports = router;
+module.exports = { customerRoute: router };

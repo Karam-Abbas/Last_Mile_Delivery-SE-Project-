@@ -8,26 +8,25 @@ const customerSchema = new mongoose.Schema({
   contactNo: { type: String, required: true, unique: true }
 });
 
-personSchema.pre('save', async function(next){
-    const customer = this;
-    if(!customer.isModified('password')) return next();
-    try {
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(customer.password,salt)
-        customer.password = hashedPassword;
-        next()
-    } catch (error) {
-        return next(error)
-    }
-})
+// Hash the password before saving the customer
+customerSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
-customerSchema.methods.comparePassword = async function(customerPassword){
-    try {
-        const isMatch = await bcrypt.compare(customerPassword, this.password)
-        return isMatch 
-    } catch (error) {
-        throw error;
-    }
-}
+// Method to compare password
+customerSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-module.exports = mongoose.model('Customer', customerSchema);
+const Customer = mongoose.model('Customer', customerSchema);
+
+module.exports = Customer;
