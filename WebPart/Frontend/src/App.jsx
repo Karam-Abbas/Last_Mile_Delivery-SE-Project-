@@ -1,57 +1,66 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import './App.css'
+import React, { useState } from "react";
+import axios from "axios";
+import "./App.css";
 
 function App() {
-  const [formData, setFormData] = useState({
-    ClientId: '',
-});
+  const [customerId, setCustomerId] = useState(""); // State for storing customerId
+  const [res, setRes] = useState({}); // State for storing the response
 
-const [res, setRes] = useState({});
+  const handleChange = (e) => {
+    const { value } = e.target; // Extract the value from the input event
+    setCustomerId(value); // Update customerId state
+  };
 
-const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-};
-
-async function getUser() {
-  try {
-    const response = await axios.post('http://localhost:3000/generate-otp', { customerId: formData.ClientId });
-    console.log(response);
-    setRes(response.data);
-  } catch (error) {
-    console.error(error);
+  async function getUser() {
+    try {
+      const response = await axios.post("http://localhost:3000/generate-otp", {
+        customerId, // Pass the customerId in the request body
+      });
+      console.log(response.data); // Log the response data
+      setRes(response.data); // Update response state with the server response
+    } catch (error) {
+      console.error("Error generating OTP:", error);
+    }
   }
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    if (!customerId) {
+      alert("Customer ID is required!");
+      return;
+    }
+    getUser(); // Call the function to make the API request
+  };
+
+  return (
+    <div className="App">
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>
+            Customer ID:
+            <input
+              className="border border-solid border-black"
+              type="text"
+              name="customerId"
+              value={customerId} // Bind value to customerId state
+              onChange={handleChange} // Update customerId state on change
+              placeholder="Enter Customer ID"
+            />
+          </label>
+        </div>
+        <button
+          className="border border-solid border-black"
+          type="submit" // Correct button type for form submission
+        >
+          Generate OTP
+        </button>
+      </form>
+      <div>
+        <p>OTP: {res.otp || "No OTP yet"}</p>
+        {res.message && <p>Message: {res.message}</p>} {/* Display server message */}
+      </div>
+    </div>
+  );
 }
 
-const handleSubmit = (e) => {
-  e.preventDefault();  
-  getUser();
-};
-
-return (
-  <>
-    <form onSubmit={handleSubmit}>
-        <div >
-            <label>
-                Name:
-                <input
-                    className='border border-solid border-black'
-                    type="text"
-                    name="ClientId"
-                    value={formData.ClientId}
-                    onChange={handleChange}
-                />
-            </label>
-        </div>
-        <button className='border border-solid border-black' type="Generate OTP">Submit</button>
-
-    </form>
-    <div>OTP:
-        {res.otp || "No OTP yet"}
-    </div>
-    </>
-);
-};
-
-export default App
+export default App;

@@ -6,6 +6,7 @@ const logSchema = new mongoose.Schema({
     box_id: { type: String },
     otp_flag: { type: String, required: true }, // success or failed
     otp: { type: String }, // OTP is null if the generation fails
+    //message:{ type: String},
     timestamp: { type: Date, default: Date.now },
 });
 
