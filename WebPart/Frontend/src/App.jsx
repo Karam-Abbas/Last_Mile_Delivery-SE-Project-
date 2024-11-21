@@ -4,60 +4,90 @@ import "./App.css";
 
 function App() {
   const [customerId, setCustomerId] = useState(""); // State for storing customerId
-  const [res, setRes] = useState({}); // State for storing the response
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // State for storing OTP digits (6 digits)
+  const [resMessage, setResMessage] = useState(""); // State for response message
 
-  const handleChange = (e) => {
-    const { value } = e.target; // Extract the value from the input event
-    setCustomerId(value); // Update customerId state
+  const handleChange = (e, index) => {
+    const { value } = e.target;
+    const newOtp = [...otp];
+    newOtp[index] = value; // Update the OTP state for the specific digit
+    setOtp(newOtp);
+
+    // Auto-focus the next input field
+    if (value && index < otp.length - 1) {
+      document.getElementById(`otp-${index + 1}`).focus();
+    }
   };
 
-  async function getUser() {
-    try {
-      const response = await axios.post("http://localhost:3000/generate-otp", {
-        customerId, // Pass the customerId in the request body
-      });
-      console.log(response.data); // Log the response data
-      setRes(response.data); // Update response state with the server response
-    } catch (error) {
-      console.error("Error generating OTP:", error);
-    }
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent default form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!customerId) {
       alert("Customer ID is required!");
       return;
     }
-    getUser(); // Call the function to make the API request
+
+    try {
+      // Call the backend API
+      const response = await axios.post("http://localhost:3000/generate-otp", {
+        customerId,
+      });
+
+      if (response.data && response.data.otp) {
+        // Split OTP digits and update the state
+        const otpDigits = response.data.otp.toString().split(""); // Convert OTP to an array of digits
+        setOtp(otpDigits);
+        setResMessage(response.data.message || "OTP generated successfully!");
+      }
+    } catch (error) {
+      console.error("Error generating OTP:", error);
+      setResMessage("Failed to generate OTP. Please try again.");
+    }
   };
 
   return (
     <div className="App">
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            Customer ID:
-            <input
-              className="border border-solid border-black"
-              type="text"
-              name="customerId"
-              value={customerId} // Bind value to customerId state
-              onChange={handleChange} // Update customerId state on change
-              placeholder="Enter Customer ID"
-            />
-          </label>
+      <div className="container">
+        <div className="card">
+          <h1>OTP Generator</h1>
+          <form onSubmit={handleSubmit}>
+            <div>
+              <label>
+                Customer ID:
+                <input
+                  className="input-field"
+                  type="text"
+                  name="customerId"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  placeholder="Enter Customer ID"
+                />
+              </label>
+            </div>
+
+            <div className="otp-input">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  maxLength="1"
+                  value={digit}
+                  onChange={(e) => handleChange(e, index)}
+                  className="otp-input-field"
+                  disabled // Disable manual editing
+                />
+              ))}
+            </div>
+
+            <button className="submit-btn" type="submit">
+              Generate OTP
+            </button>
+          </form>
+
+          <div className="response">
+            <p>{resMessage}</p>
+          </div>
         </div>
-        <button
-          className="border border-solid border-black"
-          type="submit" // Correct button type for form submission
-        >
-          Generate OTP
-        </button>
-      </form>
-      <div>
-        <p>OTP: {res.otp || "No OTP yet"}</p>
-        {res.message && <p>Message: {res.message}</p>} {/* Display server message */}
       </div>
     </div>
   );
