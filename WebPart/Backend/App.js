@@ -8,7 +8,7 @@ app.use(cors({
   methods: ["GET", "POST"], // Specify allowed methods
   allowedHeaders: ["Content-Type", "Authorization"], // Specify allowed headers
 }));
-const Log = require("./models/logmodel"); // Import the log schema
+const Log = require("./models/logModel"); // Import the log schema
 const User = require("./models/user"); // Import the user
 app.use(express.json());
 
